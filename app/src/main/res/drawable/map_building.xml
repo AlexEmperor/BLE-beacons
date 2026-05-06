@@ -1,0 +1,36 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="400dp"
+    android:height="400dp"
+    android:viewportWidth="400"
+    android:viewportHeight="400">
+
+    <!-- фон -->
+    <path
+        android:fillColor="#0B0F1A"
+        android:pathData="M0,0h400v400h-400z"/>
+
+    <!-- внешний контур -->
+    <path
+        android:strokeColor="#00E5FF"
+        android:strokeWidth="3"
+        android:fillColor="#00000000"
+        android:pathData="M20,20h360v360h-360z"/>
+
+    <!-- коридор -->
+    <path
+        android:fillColor="#121826"
+        android:pathData="M20,170h360v60h-360z"/>
+
+    <!-- комнаты -->
+    <path android:fillColor="#121826" android:pathData="M20,20h160v150h-160z"/>
+    <path android:fillColor="#121826" android:pathData="M180,20h200v150h-200z"/>
+    <path android:fillColor="#121826" android:pathData="M20,230h160v150h-160z"/>
+    <path android:fillColor="#121826" android:pathData="M180,230h200v150h-200z"/>
+
+    <!-- стены -->
+    <path
+        android:strokeColor="#00E5FF"
+        android:strokeWidth="2"
+        android:fillColor="#00000000"
+        android:pathData="M20,170h360 M180,20v360"/>
+</vector>
