@@ -1,34 +1,36 @@
 package com.example.bleapp.data
 
-// 📡 Координаты маяков для РАДАРА (вкладка «Позиция»).
-// Тут позиции реальные в пространстве — некоторые маяки далеко, за пределами комнаты.
-// Видны только при отдалении (zoom out).
-val roomBeacons = listOf(
-    // ближние — внутри комнаты
-    BeaconPosition("B1", 0.25f, 0.20f),
-    BeaconPosition("B2", 0.75f, 0.25f),
-    BeaconPosition("B3", 0.70f, 0.75f),
-    BeaconPosition("B4", 0.30f, 0.70f),
-    // дальние — за стенами
-    BeaconPosition("B5", -0.6f, 0.5f),
-    BeaconPosition("B6", 1.6f, 0.4f),
-    BeaconPosition("B7", 0.5f, -0.7f),
-    BeaconPosition("B8", 0.5f, 1.7f)
+// 📡 Внутреннее представление маяка для рендера/симуляции.
+// x, y — нормализованные [0..1] в "image-space" (y=0 — верх плана).
+// lat, lon, level — для расчёта реальной дистанции даже между этажами/зданиями.
+data class BeaconSeed(
+    val id: String,
+    val mac: String,
+    val x: Float,
+    val y: Float,
+    val txPower: Int = -65,
+    val lat: Double = 0.0,
+    val lon: Double = 0.0,
+    val level: Int = 1,
+    val major: Int = 0,
+    val minor: Int = 0,
+    val beaconId: Long = 0
 )
 
-// 🗺️ Координаты тех же маяков на ПЛАНЕ ЗДАНИЯ (вкладка «Карта»).
-// Здесь все 8 маяков расположены в разных частях здания.
-// Все координаты в пределах [0..1] — внутри плана.
-val mapBeacons = listOf(
-    // комнаты по углам
-    BeaconPosition("B1", 0.20f, 0.18f),
-    BeaconPosition("B2", 0.80f, 0.18f),
-    BeaconPosition("B3", 0.80f, 0.82f),
-    BeaconPosition("B4", 0.20f, 0.82f),
-    // коридор / центр
-    BeaconPosition("B5", 0.50f, 0.30f),
-    BeaconPosition("B6", 0.50f, 0.70f),
-    // боковые стены
-    BeaconPosition("B7", 0.10f, 0.50f),
-    BeaconPosition("B8", 0.90f, 0.50f)
-)
+/** Маяки выбранного этажа в image-space (с инверсией Y от Navigine). */
+fun seedsForFloor(floorId: String): List<BeaconSeed> =
+    realBeaconsByFloor[floorId].orEmpty().map { rb ->
+        BeaconSeed(
+            id = rb.id,
+            mac = rb.mac,
+            x = rb.kx,
+            y = 1f - rb.ky,
+            txPower = rb.txPower,
+            lat = rb.lat,
+            lon = rb.lon,
+            level = rb.level,
+            major = rb.major,
+            minor = rb.minor,
+            beaconId = rb.beaconId
+        )
+    }

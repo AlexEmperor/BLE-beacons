@@ -35,23 +35,13 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bleapp.data.Beacon
-import com.example.bleapp.data.roomBeacons
+import com.example.bleapp.data.BeaconSeed
+import com.example.bleapp.util.beaconColor
 import com.example.bleapp.util.calculateDistance
 import androidx.compose.ui.draw.clipToBounds
 
-private val beaconColors = listOf(
-    Color(0xFFB388FF), // 1 — фиолетовый
-    Color(0xFF40C4FF), // 2 — голубой
-    Color(0xFFFFC107), // 3 — жёлтый
-    Color(0xFFFF5252), // 4 — красный
-    Color(0xFF69F0AE), // 5 — зелёный (дальний)
-    Color(0xFFFF80AB), // 6 — розовый (дальний)
-    Color(0xFFFFAB40), // 7 — оранжевый (дальний)
-    Color(0xFF80D8FF)  // 8 — светло-голубой (дальний)
-)
-
 @Composable
-fun PositionView(beacons: List<Beacon>, userPos: Offset) {
+fun PositionView(beacons: List<Beacon>, userPos: Offset, seeds: List<BeaconSeed>, roomSizeM: Float) {
 
     // 🔍 состояние масштаба и сдвига
     var scale by remember { mutableStateOf(1f) }
@@ -87,7 +77,7 @@ fun PositionView(beacons: List<Beacon>, userPos: Offset) {
             val width = size.width - padding * 2
             val height = size.height - padding * 2
 
-            val pxPerMeter = minOf(width, height) / 6f
+            val pxPerMeter = minOf(width, height) / roomSizeM
 
             // центр радара (вокруг него масштабируем)
             val cx = left + width / 2
@@ -105,38 +95,33 @@ fun PositionView(beacons: List<Beacon>, userPos: Offset) {
 
             val userScreen = worldToScreen(userPos.x, userPos.y)
 
-            // 1️⃣ круги дистанций (тоже масштабируются вместе с миром)
-            beacons.forEachIndexed { index, beacon ->
-                if (index >= roomBeacons.size) return@forEachIndexed
-                val pos = roomBeacons[index]
-                val bScreen = worldToScreen(pos.x, pos.y)
+            // 1️⃣ круги дистанций — для каждого маяка, очень мягко, чтобы не рябило
+            seeds.forEachIndexed { index, pos ->
+                val beacon = beacons.find { it.id == pos.id } ?: return@forEachIndexed
 
-                val color = beaconColors[index % beaconColors.size]
+                val bScreen = worldToScreen(pos.x, pos.y)
+                val color = beaconColor(index, seeds.size.coerceAtLeast(1))
                 val distMeters = calculateDistance(beacon.rssi).toFloat()
                 val radiusPx = distMeters * pxPerMeter * scale
 
                 drawCircle(
-                    color = color.copy(alpha = 0.06f),
+                    color = color.copy(alpha = 0.08f),
                     radius = radiusPx,
                     center = bScreen
                 )
                 drawCircle(
-                    color = color,
+                    color = color.copy(alpha = 0.55f),
                     radius = radiusPx,
                     center = bScreen,
-                    style = Stroke(
-                        width = 2.5f,
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(14f, 10f))
-                    )
+                    style = Stroke(width = 1.6f)
                 )
             }
 
             // 2️⃣ иконки маяков и подписи
-            beacons.forEachIndexed { index, beacon ->
-                if (index >= roomBeacons.size) return@forEachIndexed
-                val pos = roomBeacons[index]
+            seeds.forEachIndexed { index, pos ->
+                val beacon = beacons.find { it.id == pos.id } ?: return@forEachIndexed
                 val bScreen = worldToScreen(pos.x, pos.y)
-                val color = beaconColors[index % beaconColors.size]
+                val color = beaconColor(index, seeds.size.coerceAtLeast(1))
 
                 drawCircle(color.copy(alpha = 0.18f), 32f, bScreen)
                 drawCircle(color.copy(alpha = 0.30f), 24f, bScreen)
@@ -169,7 +154,7 @@ fun PositionView(beacons: List<Beacon>, userPos: Offset) {
             drawCircle(Color(0xFF40C4FF), 13f, userScreen)
         }
 
-        // 🏷️ индикатор масштаба в углу
+        // 🏷️ индикатор масштаба
         Text(
             text = "%.1fx".format(scale),
             color = Color.White,

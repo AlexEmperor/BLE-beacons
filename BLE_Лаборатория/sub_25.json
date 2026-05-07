@@ -1,0 +1,40 @@
+{
+  "sublocation": {
+    "id": 25,
+    "location_id": 17,
+    "name": "NIIMA-Lab(BLE)",
+    "lat": 55.84364764,
+    "lon": 37.5383035,
+    "hor": "69.00000",
+    "sort_order": 0,
+    "timezone": "3",
+    "image_bounds": "55.69382380050948;\n        37.348646266119815;\n        55.692614395011915;\n        37.34688367162433",
+    "level": "1",
+    "location": {
+      "id": 17,
+      "title": "BLE - Лаборатория",
+      "description": "",
+      "state": 0,
+      "navigation_config_id": 3,
+      "tracking_config_id": 6,
+      "editPermission": 2
+    },
+    "files": [
+      {
+        "type": "image/png",
+        "name": "25_1748466159049.png",
+        "full_url": "https://cdn.ai-navigation.mri-progress.ru:443/sublocations/25_1748466159049.png"
+      }
+    ],
+    "dimensions_in_meters": {
+      "width": "15.45473",
+      "height": "18.81446",
+      "z": "0.000"
+    },
+    "externalId": null,
+    "dimensions_in_pixels": {
+      "width": "5888.00000",
+      "height": "7168.00000"
+    }
+  }
+}

@@ -52,5 +52,7 @@ dependencies {
         implementation("androidx.compose.material3:material3")
 
         implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
+
+        implementation("com.caverock:androidsvg-aar:1.4")
     }
 }

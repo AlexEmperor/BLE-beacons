@@ -1,0 +1,40 @@
+{
+  "sublocation": {
+    "id": 28,
+    "location_id": 17,
+    "name": "outdoor",
+    "lat": 55.84340244,
+    "lon": 37.53807038,
+    "hor": "0.00000",
+    "sort_order": 0,
+    "timezone": "3",
+    "image_bounds": "55.84410168861716;\n        37.54003762623051;\n        55.84270319138284;\n        37.536103133769494",
+    "level": "1",
+    "location": {
+      "id": 17,
+      "title": "BLE - Лаборатория",
+      "description": "",
+      "state": 0,
+      "navigation_config_id": 3,
+      "tracking_config_id": 6,
+      "editPermission": 2
+    },
+    "files": [
+      {
+        "type": "image/png",
+        "name": "28_1748466159063.png",
+        "full_url": "https://cdn.ai-navigation.mri-progress.ru:443/sublocations/28_1748466159063.png"
+      }
+    ],
+    "dimensions_in_meters": {
+      "width": "245.91000",
+      "height": "155.68000",
+      "z": "0.000"
+    },
+    "externalId": null,
+    "dimensions_in_pixels": {
+      "width": "1450.00000",
+      "height": "918.00000"
+    }
+  }
+}

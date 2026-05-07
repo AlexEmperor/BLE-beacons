@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew compileDebugKotlin)",
+      "Bash(./gradlew assembleDebug)",
+      "Bash(C:/Users/Sasha/AppData/Local/Android/Sdk/platform-tools/adb.exe install *)",
+      "Bash(./gradlew :app:compileDebugKotlin)",
+      "Bash(C:\\\\Users\\\\Sasha\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe devices *)",
+      "Bash(./gradlew :app:installDebug)",
+      "Bash(python -c ' *)",
+      "Bash(\"C:\\\\Users\\\\Sasha\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" shell *)"
+    ]
+  }
+}

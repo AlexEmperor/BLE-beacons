@@ -1,0 +1,40 @@
+{
+  "sublocation": {
+    "id": 4,
+    "location_id": 3,
+    "name": "Niima_Lab",
+    "lat": 55.84364841,
+    "lon": 37.5383073,
+    "hor": "70.00000",
+    "sort_order": 0,
+    "timezone": "3",
+    "image_bounds": "55.843610811747276;\n        37.538497087619085;\n        55.843686008252725;\n        37.538117512380914",
+    "level": "1",
+    "location": {
+      "id": 3,
+      "title": "Niima_Lab(RTT)",
+      "description": " ",
+      "state": 0,
+      "navigation_config_id": 3,
+      "tracking_config_id": 4,
+      "editPermission": 2
+    },
+    "files": [
+      {
+        "type": "image/png",
+        "name": "4_1673511926305.png",
+        "full_url": "https://cdn.ai-navigation.mri-progress.ru:443/sublocations/4_1673511926305.png"
+      }
+    ],
+    "dimensions_in_meters": {
+      "width": "15.98000",
+      "height": "19.43000",
+      "z": "0.000"
+    },
+    "externalId": null,
+    "dimensions_in_pixels": {
+      "width": "5888.00000",
+      "height": "7168.00000"
+    }
+  }
+}

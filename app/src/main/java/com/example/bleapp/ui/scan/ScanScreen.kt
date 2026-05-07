@@ -1,36 +1,46 @@
 package com.example.bleapp.ui.scan
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bleapp.data.Beacon
-import com.example.bleapp.ui.common.LegendMenuButton
 import com.example.bleapp.ui.theme.BgPrimary
-import com.example.bleapp.ui.theme.BgTertiary
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScanScreen(
     beacons: List<Beacon>,
@@ -44,14 +54,6 @@ fun ScanScreen(
             .fillMaxSize()
             .background(BgPrimary)
     ) {
-        TopAppBar(
-            title = {
-                Text("Сканирование", color = Color.White, fontWeight = FontWeight.SemiBold)
-            },
-            actions = { LegendMenuButton() },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = BgTertiary)
-        )
-
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
@@ -66,24 +68,10 @@ fun ScanScreen(
             }
         }
 
-        Button(
-            onClick = onToggleScanning,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .height(52.dp),
-            shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF2B5C9E),
-                contentColor = Color.White
-            )
-        ) {
-            Text(
-                text = if (isScanning) "ОСТАНОВИТЬ СКАНИРОВАНИЕ" else "НАЧАТЬ СКАНИРОВАНИЕ",
-                fontWeight = FontWeight.Bold,
-                fontSize = 14.sp
-            )
-        }
+        ScanPillButton(
+            isScanning = isScanning,
+            onToggle = onToggleScanning
+        )
     }
 
     selectedBeacon?.let { beacon ->
@@ -91,5 +79,60 @@ fun ScanScreen(
             beacon = beacon,
             onDismiss = { selectedBeacon = null }
         )
+    }
+}
+
+@Composable
+private fun ScanPillButton(isScanning: Boolean, onToggle: () -> Unit) {
+    val transition = rememberInfiniteTransition(label = "scanPill")
+    val pulse by transition.animateFloat(
+        initialValue = 0.45f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(900), RepeatMode.Reverse),
+        label = "scanPillPulse"
+    )
+
+    val gradient = if (isScanning) {
+        Brush.linearGradient(listOf(Color(0xFF0E3548), Color(0xFF06121A)))
+    } else {
+        Brush.linearGradient(listOf(Color(0xFF1A1D26), Color(0xFF0F1117)))
+    }
+    val borderColor = if (isScanning) Color(0xFF00E5FF) else Color(0xFF2A2F3A)
+    val dotColor = if (isScanning) Color(0xFF00E5FF) else Color(0xFF5A6070)
+    val textColor = if (isScanning) Color(0xFFE6FBFF) else Color(0xFFB8BDC9)
+    val label = if (isScanning) "Сканирование…" else "НАЧАТЬ СКАНИРОВАНИЕ"
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .height(56.dp)
+            .clip(RoundedCornerShape(28.dp))
+            .background(gradient)
+            .border(BorderStroke(1.5.dp, borderColor), RoundedCornerShape(28.dp))
+            .clickable { onToggle() },
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(if (isScanning) (8 * pulse + 4).dp else 8.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (isScanning) dotColor.copy(alpha = pulse) else dotColor
+                    )
+            )
+            Spacer(Modifier.width(12.dp))
+            Text(
+                text = label,
+                color = textColor,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.2.sp
+            )
+        }
     }
 }
