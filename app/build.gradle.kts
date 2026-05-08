@@ -15,8 +15,8 @@ android {
         applicationId = "com.example.bleapp"
         minSdk = 31
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -47,7 +47,7 @@ tasks.register("generateVersionJson") {
 
     doLast {
         val versionCode = android.defaultConfig.versionCode ?: 1
-        val versionName = android.defaultConfig.versionName ?: "1.0"
+        val versionName = android.defaultConfig.versionName ?: "1.0.1"
         val apkUrl = providers
             .gradleProperty("updateApkUrl")
             .orElse("https://github.com/AlexEmperor/BLE-beacons/releases/latest/download/app-release.apk")
