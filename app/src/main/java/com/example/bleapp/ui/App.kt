@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.bleapp.BuildConfig
 import com.example.bleapp.ui.common.LegendMenuButton
 import com.example.bleapp.ui.common.SegmentedTab
 import com.example.bleapp.ui.common.SegmentedTabs
@@ -126,18 +125,6 @@ private fun MainContent(vm: MainViewModel) {
             )
 
             LegendMenuButton(allBeacons, vm.allSeeds)
-
-            Text(
-                text = "v${BuildConfig.VERSION_NAME}",
-                color = Color(0xFF8A8A95),
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFF12141C))
-                    .border(1.dp, Color(0xFF1F2330), RoundedCornerShape(12.dp))
-                    .padding(horizontal = 8.dp, vertical = 5.dp)
-            )
         }
 
         Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
@@ -227,29 +214,14 @@ private fun UpdateDialog(
                 Text(it, color = Color(0xFF00E5FF), fontSize = 13.sp)
             }
             Spacer(Modifier.height(18.dp))
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                OutlinedButton(
-                    onClick = onDismiss,
-                    enabled = !busy,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Позже")
-                }
-                OutlinedButton(
-                    onClick = onOpenRelease,
-                    enabled = !busy,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Релиз")
-                }
                 Button(
                     onClick = onInstall,
                     enabled = !busy,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     if (busy) {
                         CircularProgressIndicator(
@@ -260,6 +232,20 @@ private fun UpdateDialog(
                     } else {
                         Text("Обновить")
                     }
+                }
+                OutlinedButton(
+                    onClick = onOpenRelease,
+                    enabled = !busy,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Открыть GitHub")
+                }
+                OutlinedButton(
+                    onClick = onDismiss,
+                    enabled = !busy,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Позже")
                 }
             }
         }

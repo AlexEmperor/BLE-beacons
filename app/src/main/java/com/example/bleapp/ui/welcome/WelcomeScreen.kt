@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.bleapp.BuildConfig
 import com.example.bleapp.ui.theme.BgPrimary
 import kotlin.math.cos
 import kotlin.math.sin
@@ -88,7 +89,7 @@ fun WelcomeScreen(onStart: () -> Unit) {
             Spacer(Modifier.weight(1f))
 
             Text(
-                "v1.0",
+                "v${BuildConfig.VERSION_NAME}",
                 color = Color(0xFF3A3D48),
                 fontSize = 11.sp
             )
