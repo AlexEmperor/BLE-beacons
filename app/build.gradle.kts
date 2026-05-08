@@ -37,6 +37,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -49,7 +50,7 @@ tasks.register("generateVersionJson") {
         val versionName = android.defaultConfig.versionName ?: "1.0"
         val apkUrl = providers
             .gradleProperty("updateApkUrl")
-            .orElse("https://github.com/AlexEmperor/BLE-beacons/releases/latest/download/app-debug.apk")
+            .orElse("https://github.com/AlexEmperor/BLE-beacons/releases/latest/download/app-release.apk")
             .get()
 
         val json = """
