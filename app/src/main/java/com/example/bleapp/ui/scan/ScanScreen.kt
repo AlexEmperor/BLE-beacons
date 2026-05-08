@@ -45,7 +45,9 @@ import com.example.bleapp.ui.theme.BgPrimary
 fun ScanScreen(
     beacons: List<Beacon>,
     isScanning: Boolean,
-    onToggleScanning: () -> Unit
+    showSavedBeacons: Boolean,
+    onToggleScanning: () -> Unit,
+    onToggleSavedBeacons: () -> Unit
 ) {
     var selectedBeacon by remember { mutableStateOf<Beacon?>(null) }
 
@@ -68,10 +70,17 @@ fun ScanScreen(
             }
         }
 
-        ScanPillButton(
-            isScanning = isScanning,
-            onToggle = onToggleScanning
-        )
+        Column(modifier = Modifier.padding(16.dp)) {
+            SavedBeaconsButton(
+                enabled = showSavedBeacons,
+                onToggle = onToggleSavedBeacons
+            )
+            Spacer(Modifier.height(10.dp))
+            ScanPillButton(
+                isScanning = isScanning,
+                onToggle = onToggleScanning
+            )
+        }
     }
 
     selectedBeacon?.let { beacon ->
@@ -79,6 +88,50 @@ fun ScanScreen(
             beacon = beacon,
             onDismiss = { selectedBeacon = null }
         )
+    }
+}
+
+@Composable
+private fun SavedBeaconsButton(enabled: Boolean, onToggle: () -> Unit) {
+    val gradient = if (enabled) {
+        Brush.linearGradient(listOf(Color(0xFF173B2D), Color(0xFF071911)))
+    } else {
+        Brush.linearGradient(listOf(Color(0xFF1A1D26), Color(0xFF0F1117)))
+    }
+    val borderColor = if (enabled) Color(0xFF00FFA3) else Color(0xFF2A2F3A)
+    val dotColor = if (enabled) Color(0xFF00FFA3) else Color(0xFF5A6070)
+    val textColor = if (enabled) Color(0xFFE8FFF6) else Color(0xFFB8BDC9)
+    val label = if (enabled) "СКРЫТЬ СУЩЕСТВУЮЩИЕ МАЯКИ" else "ОТОБРАЗИТЬ СУЩЕСТВУЮЩИЕ МАЯКИ"
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .clip(RoundedCornerShape(24.dp))
+            .background(gradient)
+            .border(BorderStroke(1.5.dp, borderColor), RoundedCornerShape(24.dp))
+            .clickable { onToggle() },
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(dotColor)
+            )
+            Spacer(Modifier.width(10.dp))
+            Text(
+                text = label,
+                color = textColor,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.8.sp
+            )
+        }
     }
 }
 
@@ -105,7 +158,6 @@ private fun ScanPillButton(isScanning: Boolean, onToggle: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
             .height(56.dp)
             .clip(RoundedCornerShape(28.dp))
             .background(gradient)

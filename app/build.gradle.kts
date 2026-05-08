@@ -13,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.bleapp"
-        minSdk = 29
+        minSdk = 31
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -36,6 +36,34 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+}
+
+tasks.register("generateVersionJson") {
+    val outputFile = layout.buildDirectory.file("outputs/update/version.json")
+    outputs.file(outputFile)
+
+    doLast {
+        val versionCode = android.defaultConfig.versionCode ?: 1
+        val versionName = android.defaultConfig.versionName ?: "1.0"
+        val apkUrl = providers
+            .gradleProperty("updateApkUrl")
+            .orElse("https://github.com/AlexEmperor/BLE-beacons/releases/latest/download/app-debug.apk")
+            .get()
+
+        val json = """
+            {
+              "versionCode": $versionCode,
+              "versionName": "$versionName",
+              "message": "Хорошие новости! Вышла новая версия приложения.",
+              "apkUrl": "$apkUrl",
+              "required": false
+            }
+        """.trimIndent()
+
+        val file = outputFile.get().asFile
+        file.parentFile.mkdirs()
+        file.writeText(json)
     }
 }
 

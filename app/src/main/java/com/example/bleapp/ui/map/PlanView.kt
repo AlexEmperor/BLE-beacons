@@ -114,7 +114,7 @@ fun PlanView(floor: PlanFloor, beacons: List<Beacon>, userPos: Offset, seeds: Li
                 }
             }
 
-            // 📡 маяки выбранного этажа (Y уже инвертирован в seedsForFloor)
+            // 📡 live-маяки выбранного корпуса/этажа
             seeds.forEachIndexed { index, pos ->
                 beacons.find { it.id == pos.id } ?: return@forEachIndexed
                 val color = beaconColor(index, seeds.size.coerceAtLeast(1))

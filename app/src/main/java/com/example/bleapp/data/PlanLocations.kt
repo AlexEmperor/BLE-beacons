@@ -23,7 +23,7 @@ data class PlanLocation(
 val planLocations: List<PlanLocation> = listOf(
     PlanLocation(
         id = "intellect_gnss",
-        name = "Интеллект-ГНСС",
+        name = "Интеллект",
         floors = listOf(
             PlanFloor("ig_f1", "1 этаж", "plans/intellect_gnss/floor1.svg", true, 83.33f, 59.00f, 1, 55.84341, 37.53777),
             PlanFloor("ig_f2", "2 этаж", "plans/intellect_gnss/floor2.svg", true, 83.04f, 59.00f, 2, 55.84340, 37.53777),

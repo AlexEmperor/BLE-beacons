@@ -2,6 +2,7 @@ package com.example.bleapp.ui.scan
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,13 +12,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,75 +31,76 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.example.bleapp.data.Beacon
 import com.example.bleapp.util.calculateDistance
 import com.example.bleapp.util.rssiColor
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BeaconDetailsDialog(beacon: Beacon, onDismiss: () -> Unit) {
     val color = rssiColor(beacon.rssi)
     val distance = calculateDistance(beacon.rssi, beacon.txPower)
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = Color(0xFF161821),
-        dragHandle = {
-            Box(
-                modifier = Modifier
-                    .padding(top = 10.dp)
-                    .size(width = 36.dp, height = 4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(Color(0xFF3A3D48))
-            )
-        }
-    ) {
-        Column(
+    Dialog(onDismissRequest = onDismiss) {
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 24.dp)
+                .widthIn(max = 360.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color(0xFF161821))
+                .border(1.dp, Color(0xFF2A2D38), RoundedCornerShape(16.dp))
+                .padding(20.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(color.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("📡", fontSize = 24.sp)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(color.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("📡", fontSize = 24.sp)
+                    }
+
+                    Spacer(Modifier.size(14.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            beacon.id,
+                            color = Color.White,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "≈ %.2f м".format(distance),
+                            color = color,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Text("×", color = Color(0xFF8A8A95), fontSize = 24.sp)
+                    }
                 }
 
-                Spacer(Modifier.size(14.dp))
+                Spacer(Modifier.height(20.dp))
 
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        beacon.id,
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        "≈ %.2f м".format(distance),
-                        color = color,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
+                MacRow(mac = beacon.mac)
+                InfoRow("RSSI", "${beacon.rssi} dBm")
+                InfoRow("TX Power", "${beacon.txPower} dBm")
+                InfoRow("Beacon ID", "0x%08X".format(beacon.beaconId))
+                InfoRow("Major", beacon.major.toString())
+                InfoRow("Minor", beacon.minor.toString())
+                InfoRow("Координаты", "%.6f, %.6f".format(beacon.latitude, beacon.longitude))
             }
-
-            Spacer(Modifier.height(20.dp))
-
-            MacRow(mac = beacon.mac)
-            InfoRow("RSSI", "${beacon.rssi} dBm")
-            InfoRow("TX Power", "${beacon.txPower} dBm")
-            InfoRow("Beacon ID", "0x%08X".format(beacon.beaconId))
-            InfoRow("Major", beacon.major.toString())
-            InfoRow("Minor", beacon.minor.toString())
-            InfoRow("Координаты", "%.6f, %.6f".format(beacon.latitude, beacon.longitude))
         }
     }
 }

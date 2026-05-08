@@ -61,7 +61,7 @@ fun MapScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             DropdownSelector(
-                label = "Помещение",
+                label = "Корпус",
                 value = location.name,
                 options = planLocations.map { it.name },
                 onSelected = { idx ->

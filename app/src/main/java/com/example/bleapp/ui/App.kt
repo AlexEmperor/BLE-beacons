@@ -57,6 +57,7 @@ private fun MainContent(vm: MainViewModel) {
     val allBeacons by vm.allBeacons.collectAsState()
     val currentBeacons by vm.currentBeacons.collectAsState()
     val isScanning by vm.isScanning.collectAsState()
+    val showSavedBeacons by vm.showSavedBeacons.collectAsState()
     val userPos by vm.userPos.collectAsState()
     val seeds by vm.currentSeeds.collectAsState()
     val selectedFloor by vm.selectedFloor.collectAsState()
@@ -66,7 +67,7 @@ private fun MainContent(vm: MainViewModel) {
     val tabs = listOf(
         SegmentedTab("Сканер", TabIconKind.Scan),
         SegmentedTab("Маяки", TabIconKind.Beacons),
-        SegmentedTab("Помещение", TabIconKind.Floor)
+        SegmentedTab("Корпус", TabIconKind.Floor)
     )
 
     Column(
@@ -94,7 +95,13 @@ private fun MainContent(vm: MainViewModel) {
 
         Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
             when (selectedTab) {
-                0 -> ScanScreen(allBeacons, isScanning) { vm.toggleScanning() }
+                0 -> ScanScreen(
+                    beacons = allBeacons,
+                    isScanning = isScanning,
+                    showSavedBeacons = showSavedBeacons,
+                    onToggleScanning = { vm.toggleScanning() },
+                    onToggleSavedBeacons = { vm.toggleSavedBeacons() }
+                )
                 1 -> RoomScreen(currentBeacons, userPos, seeds, roomSize)
                 2 -> MapScreen(currentBeacons, userPos, seeds, selectedFloor) { vm.selectFloor(it) }
             }

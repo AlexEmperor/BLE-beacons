@@ -3,6 +3,7 @@ package com.example.bleapp.ui.common
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +18,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -42,7 +42,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -50,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bleapp.data.Beacon
 import com.example.bleapp.data.BeaconSeed
+import com.example.bleapp.ui.scan.BeaconDetailsDialog
 import com.example.bleapp.util.beaconColor
 import com.example.bleapp.util.calculateDistance
 import kotlinx.coroutines.launch
@@ -112,6 +112,7 @@ fun LegendMenuButton(beacons: List<Beacon> = emptyList(), seeds: List<BeaconSeed
 @Composable
 private fun LegendSheetContent(beacons: List<Beacon>, seeds: List<BeaconSeed>, onClose: () -> Unit) {
     var query by remember { mutableStateOf("") }
+    var selectedBeacon by remember { mutableStateOf<Beacon?>(null) }
 
     // стабильный индекс маяка в общем перечне (для цвета, независимо от наличия в эфире)
     val filtered = remember(beacons, seeds, query) {
@@ -186,7 +187,8 @@ private fun LegendSheetContent(beacons: List<Beacon>, seeds: List<BeaconSeed>, o
                 itemsIndexed(filtered, key = { _, item -> item.second.mac }) { _, (stableIndex, beacon) ->
                     BeaconLegendRow(
                         color = beaconColor(stableIndex, seeds.size.coerceAtLeast(1)),
-                        beacon = beacon
+                        beacon = beacon,
+                        onClick = { selectedBeacon = beacon }
                     )
                 }
             }
@@ -220,14 +222,23 @@ private fun LegendSheetContent(beacons: List<Beacon>, seeds: List<BeaconSeed>, o
             }
         }
     }
+
+    selectedBeacon?.let { beacon ->
+        BeaconDetailsDialog(
+            beacon = beacon,
+            onDismiss = { selectedBeacon = null }
+        )
+    }
 }
 
 @Composable
-private fun BeaconLegendRow(color: Color, beacon: Beacon) {
+private fun BeaconLegendRow(color: Color, beacon: Beacon, onClick: () -> Unit) {
     val dist = calculateDistance(beacon.rssi, beacon.txPower)
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable { onClick() }
             .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

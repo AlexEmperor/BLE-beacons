@@ -7,7 +7,7 @@ import java.nio.ByteOrder
 /**
  * Парсер iBeacon manufacturer data.
  *
- * Ожидаемый формат (всего 25 байт):
+ * Ожидаемый формат полного manufacturer data (всего 25 байт):
  *  [0-1]   Apple Company ID (0x4C 0x00)
  *  [2-3]   iBeacon type (0x02 0x15)
  *  [4-19]  UUID 16 байт:
@@ -24,32 +24,42 @@ fun parseIBeacon(
     rssi: Int,
     mac: String = "00:00:00:00:00:00"
 ): Beacon? {
-    if (data.size < 25) return null
-    if (data[0] != 0x4C.toByte() || data[1] != 0x00.toByte()) return null
-    if (data[2] != 0x02.toByte() || data[3] != 0x15.toByte()) return null
+    val offset = when {
+        data.size >= 25 &&
+                data[0] == 0x4C.toByte() &&
+                data[1] == 0x00.toByte() &&
+                data[2] == 0x02.toByte() &&
+                data[3] == 0x15.toByte() -> 4
+
+        data.size >= 23 &&
+                data[0] == 0x02.toByte() &&
+                data[1] == 0x15.toByte() -> 2
+
+        else -> return null
+    }
 
     // Beacon ID (uint32, big-endian — как обычно в BLE-payload)
-    val beaconId = ByteBuffer.wrap(data, 4, 4)
+    val beaconId = ByteBuffer.wrap(data, offset, 4)
         .order(ByteOrder.BIG_ENDIAN)
         .int.toLong() and 0xFFFFFFFFL
 
     // Latitude / Longitude (float, big-endian)
-    val latitude = ByteBuffer.wrap(data, 12, 4)
+    val latitude = ByteBuffer.wrap(data, offset + 8, 4)
         .order(ByteOrder.BIG_ENDIAN)
         .float
 
-    val longitude = ByteBuffer.wrap(data, 16, 4)
+    val longitude = ByteBuffer.wrap(data, offset + 12, 4)
         .order(ByteOrder.BIG_ENDIAN)
         .float
 
     // Major / Minor (uint16, big-endian)
-    val major = ((data[20].toInt() and 0xFF) shl 8) or (data[21].toInt() and 0xFF)
-    val minor = ((data[22].toInt() and 0xFF) shl 8) or (data[23].toInt() and 0xFF)
+    val major = ((data[offset + 16].toInt() and 0xFF) shl 8) or (data[offset + 17].toInt() and 0xFF)
+    val minor = ((data[offset + 18].toInt() and 0xFF) shl 8) or (data[offset + 19].toInt() and 0xFF)
 
-    val txPower = data[24].toInt() // signed
+    val txPower = data[offset + 20].toInt() // signed
 
     return Beacon(
-        id = "Beacon_$minor",
+        id = "Beacon $minor",
         mac = mac,
         rssi = rssi,
         beaconId = beaconId,
