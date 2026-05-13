@@ -5,10 +5,14 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
+import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.ParcelUuid
 import androidx.core.content.ContextCompat
 import com.example.bleapp.data.Beacon
+import com.example.bleapp.data.BeaconKind
+import com.example.bleapp.util.parseEddystone
 import com.example.bleapp.util.parseIBeacon
 
 class BleBeaconScanner(
@@ -39,7 +43,11 @@ class BleBeaconScanner(
     @SuppressLint("MissingPermission")
     fun start() {
         if (started || !hasRequiredPermissions()) return
-        scanner?.startScan(callback)
+        val settings = ScanSettings.Builder()
+            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+            .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
+            .build()
+        scanner?.startScan(emptyList(), settings, callback)
         started = true
     }
 
@@ -64,12 +72,30 @@ class BleBeaconScanner(
 
     @SuppressLint("MissingPermission")
     private fun handleResult(result: ScanResult) {
-        val manufacturerData = result.scanRecord?.getManufacturerSpecificData(APPLE_COMPANY_ID) ?: return
-        val beacon = parseIBeacon(
-            data = manufacturerData,
-            rssi = result.rssi,
-            mac = result.device.address
-        ) ?: return
+        val mac = result.device.address ?: return
+        val rssi = result.rssi
+        val scanRecord = result.scanRecord
+
+        val parsed = scanRecord?.let { record ->
+            // 1) Apple manufacturer data → iBeacon (наш или стандартный).
+            record.getManufacturerSpecificData(APPLE_COMPANY_ID)?.let { data ->
+                parseIBeacon(data = data, rssi = rssi, mac = mac)
+            }
+            // 2) Eddystone (Service UUID 0xFEAA).
+                ?: record.serviceData?.get(EDDYSTONE_SERVICE_UUID)?.let { data ->
+                    parseEddystone(data = data, rssi = rssi, mac = mac)
+                }
+        }
+
+        val beacon = parsed ?: run {
+            val name = scanRecord?.deviceName?.takeIf { it.isNotBlank() } ?: "BLE-устройство"
+            Beacon(
+                id = name,
+                mac = mac,
+                rssi = rssi,
+                kind = BeaconKind.Unknown
+            )
+        }
 
         beaconsByMac[beacon.mac] = beacon
         onBeaconsChanged(beaconsByMac.values.sortedByDescending { it.rssi })
@@ -77,5 +103,7 @@ class BleBeaconScanner(
 
     companion object {
         private const val APPLE_COMPANY_ID = 0x004C
+        private val EDDYSTONE_SERVICE_UUID =
+            ParcelUuid.fromString("0000FEAA-0000-1000-8000-00805F9B34FB")
     }
 }

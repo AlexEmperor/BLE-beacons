@@ -11,7 +11,11 @@ data class PlanFloor(
     val level: Int = 1,
     /** Опорная GPS-точка центра плана (для расчёта дистанций между этажами/локациями). */
     val refLat: Double = 0.0,
-    val refLon: Double = 0.0
+    val refLon: Double = 0.0,
+    /** Угол поворота плана относительно севера, по часовой стрелке (градусы). */
+    val bearingDeg: Float = 0f,
+    /** Если true — вместо растрового/SVG-плана отрисовываем настоящую карту (osmdroid). */
+    val isWorldMap: Boolean = false
 )
 
 data class PlanLocation(
@@ -43,6 +47,24 @@ val planLocations: List<PlanLocation> = listOf(
         name = "Niima_Lab (RTT)",
         floors = listOf(
             PlanFloor("niima_f1", "1 этаж", "plans/niima_rtt/niima_lab.png", false, 15.98f, 19.43f, 1, 55.84364841, 37.5383073)
+        )
+    ),
+    PlanLocation(
+        id = "moscow",
+        name = "Москва",
+        floors = listOf(
+            PlanFloor(
+                id = "moscow_map",
+                name = "Карта",
+                assetPath = "",
+                isSvg = false,
+                widthMeters = 50_000f,
+                heightMeters = 50_000f,
+                level = 1,
+                refLat = 55.7558,
+                refLon = 37.6173,
+                isWorldMap = true
+            )
         )
     )
 )

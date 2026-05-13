@@ -40,14 +40,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bleapp.data.Beacon
 import com.example.bleapp.ui.theme.BgPrimary
+import com.example.bleapp.viewmodel.ScannerFilter
 
 @Composable
 fun ScanScreen(
     beacons: List<Beacon>,
     isScanning: Boolean,
     showSavedBeacons: Boolean,
+    scannerFilter: ScannerFilter,
     onToggleScanning: () -> Unit,
-    onToggleSavedBeacons: () -> Unit
+    onToggleSavedBeacons: () -> Unit,
+    onFilterSelected: (ScannerFilter) -> Unit
 ) {
     var selectedBeacon by remember { mutableStateOf<Beacon?>(null) }
 
@@ -56,6 +59,14 @@ fun ScanScreen(
             .fillMaxSize()
             .background(BgPrimary)
     ) {
+        FilterSwitch(
+            current = scannerFilter,
+            onSelected = onFilterSelected,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+        )
+
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
@@ -71,11 +82,13 @@ fun ScanScreen(
         }
 
         Column(modifier = Modifier.padding(16.dp)) {
-            SavedBeaconsButton(
-                enabled = showSavedBeacons,
-                onToggle = onToggleSavedBeacons
-            )
-            Spacer(Modifier.height(10.dp))
+            if (scannerFilter == ScannerFilter.OurFormat) {
+                SavedBeaconsButton(
+                    enabled = showSavedBeacons,
+                    onToggle = onToggleSavedBeacons
+                )
+                Spacer(Modifier.height(10.dp))
+            }
             ScanPillButton(
                 isScanning = isScanning,
                 onToggle = onToggleScanning
@@ -87,6 +100,68 @@ fun ScanScreen(
         BeaconDetailsDialog(
             beacon = beacon,
             onDismiss = { selectedBeacon = null }
+        )
+    }
+}
+
+@Composable
+private fun FilterSwitch(
+    current: ScannerFilter,
+    onSelected: (ScannerFilter) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(22.dp))
+            .background(Color(0xFF12141C))
+            .border(1.dp, Color(0xFF1F2330), RoundedCornerShape(22.dp))
+            .padding(4.dp)
+    ) {
+        FilterSegment(
+            label = "Наш формат",
+            selected = current == ScannerFilter.OurFormat,
+            onClick = { onSelected(ScannerFilter.OurFormat) },
+            modifier = Modifier.weight(1f)
+        )
+        FilterSegment(
+            label = "Все остальные",
+            selected = current == ScannerFilter.Others,
+            onClick = { onSelected(ScannerFilter.Others) },
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun FilterSegment(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val bg = if (selected) {
+        Brush.linearGradient(listOf(Color(0xFF0E3548), Color(0xFF06121A)))
+    } else {
+        Brush.linearGradient(listOf(Color(0xFF12141C), Color(0xFF12141C)))
+    }
+    val borderColor = if (selected) Color(0xFF00E5FF) else Color.Transparent
+    val textColor = if (selected) Color(0xFFE6FBFF) else Color(0xFFB8BDC9)
+
+    Box(
+        modifier = modifier
+            .height(36.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(bg)
+            .border(BorderStroke(1.dp, borderColor), RoundedCornerShape(18.dp))
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            color = textColor,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 0.5.sp
         )
     }
 }

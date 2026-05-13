@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.bleapp.data.Beacon
+import com.example.bleapp.data.BeaconKind
 import com.example.bleapp.util.calculateDistance
 import com.example.bleapp.util.rssiColor
 
@@ -94,12 +95,26 @@ fun BeaconDetailsDialog(beacon: Beacon, onDismiss: () -> Unit) {
                 Spacer(Modifier.height(20.dp))
 
                 MacRow(mac = beacon.mac)
+                InfoRow("Формат", beacon.kind.label())
                 InfoRow("RSSI", "${beacon.rssi} dBm")
                 InfoRow("TX Power", "${beacon.txPower} dBm")
-                InfoRow("Beacon ID", "0x%08X".format(beacon.beaconId))
-                InfoRow("Major", beacon.major.toString())
-                InfoRow("Minor", beacon.minor.toString())
-                InfoRow("Координаты", "%.6f, %.6f".format(beacon.latitude, beacon.longitude))
+                when (beacon.kind) {
+                    BeaconKind.OurCustom -> {
+                        InfoRow("Beacon ID", "0x%08X".format(beacon.beaconId))
+                        InfoRow("Major", beacon.major.toString())
+                        InfoRow("Minor", beacon.minor.toString())
+                        InfoRow("Координаты", "%.6f, %.6f".format(beacon.latitude, beacon.longitude))
+                    }
+                    BeaconKind.IBeacon -> {
+                        if (beacon.uuid.isNotEmpty()) InfoRow("UUID", formatUuid(beacon.uuid))
+                        InfoRow("Major", beacon.major.toString())
+                        InfoRow("Minor", beacon.minor.toString())
+                    }
+                    BeaconKind.Eddystone -> {
+                        if (beacon.uuid.isNotEmpty()) InfoRow("Namespace", beacon.uuid)
+                    }
+                    BeaconKind.Unknown -> Unit
+                }
             }
         }
     }
@@ -151,6 +166,19 @@ private fun MacRow(mac: String) {
             CopyIcon(tint = Color(0xFF8A8A95), modifier = Modifier.size(16.dp))
         }
     }
+}
+
+private fun BeaconKind.label(): String = when (this) {
+    BeaconKind.OurCustom -> "Наш iBeacon (GPS)"
+    BeaconKind.IBeacon -> "iBeacon"
+    BeaconKind.Eddystone -> "Eddystone"
+    BeaconKind.Unknown -> "BLE-устройство"
+}
+
+private fun formatUuid(hex: String): String {
+    if (hex.length != 32) return hex
+    return "${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-" +
+            "${hex.substring(16, 20)}-${hex.substring(20)}"
 }
 
 @Composable

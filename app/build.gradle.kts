@@ -15,10 +15,16 @@ android {
         applicationId = "com.example.bleapp"
         minSdk = 31
         targetSdk = 36
-        versionCode = 5
-        versionName = "1.0.4"
+        versionCode = 13
+        versionName = "1.0.7.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField(
+            "String",
+            "AUTH_BASE_URL",
+            "\"https://bleapp-auth.bleapp-auth.workers.dev\""
+        )
     }
 
     buildTypes {
@@ -84,5 +90,9 @@ dependencies {
         implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
 
         implementation("com.caverock:androidsvg-aar:1.4")
+
+        implementation("org.osmdroid:osmdroid-android:6.1.20")
+
+        implementation("androidx.security:security-crypto:1.1.0-alpha06")
     }
 }

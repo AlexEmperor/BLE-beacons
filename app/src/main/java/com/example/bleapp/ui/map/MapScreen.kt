@@ -34,7 +34,6 @@ import com.example.bleapp.data.Beacon
 import com.example.bleapp.data.BeaconSeed
 import com.example.bleapp.data.PlanFloor
 import com.example.bleapp.data.PlanLocation
-import com.example.bleapp.data.planLocations
 import com.example.bleapp.ui.theme.BgPrimary
 import com.example.bleapp.ui.theme.BgSecondary
 
@@ -44,10 +43,23 @@ fun MapScreen(
     userPos: Offset,
     seeds: List<BeaconSeed>,
     selectedFloor: PlanFloor,
+    geoBeacons: List<Beacon>,
+    locations: List<PlanLocation>,
     onFloorSelected: (PlanFloor) -> Unit
 ) {
-    val location: PlanLocation = remember(selectedFloor.id) {
-        planLocations.first { loc -> loc.floors.any { it.id == selectedFloor.id } }
+    if (locations.isEmpty()) {
+        Box(
+            modifier = Modifier.fillMaxSize().background(BgPrimary),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Нет доступных корпусов", color = Color(0xFF8A8A95), fontSize = 14.sp)
+        }
+        return
+    }
+
+    val location: PlanLocation = remember(selectedFloor.id, locations) {
+        locations.firstOrNull { loc -> loc.floors.any { it.id == selectedFloor.id } }
+            ?: locations.first()
     }
 
     Column(
@@ -63,9 +75,9 @@ fun MapScreen(
             DropdownSelector(
                 label = "Корпус",
                 value = location.name,
-                options = planLocations.map { it.name },
+                options = locations.map { it.name },
                 onSelected = { idx ->
-                    val loc = planLocations[idx]
+                    val loc = locations[idx]
                     if (loc.id != location.id) onFloorSelected(loc.floors.first())
                 },
                 modifier = Modifier.weight(1f)
@@ -88,7 +100,15 @@ fun MapScreen(
                 .background(BgSecondary)
                 .weight(1f)
         ) {
-            PlanView(selectedFloor, beacons, userPos, seeds)
+            if (selectedFloor.isWorldMap) {
+                MoscowMapScreen(
+                    beacons = geoBeacons,
+                    centerLat = selectedFloor.refLat,
+                    centerLon = selectedFloor.refLon
+                )
+            } else {
+                PlanView(selectedFloor, beacons, userPos, seeds)
+            }
         }
     }
 }

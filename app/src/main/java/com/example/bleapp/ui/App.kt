@@ -37,6 +37,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.bleapp.auth.Jwt
+import com.example.bleapp.auth.TokenStore
+import com.example.bleapp.data.PlansRepository
+import com.example.bleapp.ui.auth.AdminScreen
+import com.example.bleapp.ui.auth.ChangePasswordDialog
+import com.example.bleapp.ui.auth.ProfileMenuButton
 import com.example.bleapp.ui.common.LegendMenuButton
 import com.example.bleapp.ui.common.SegmentedTab
 import com.example.bleapp.ui.common.SegmentedTabs
@@ -45,6 +51,8 @@ import com.example.bleapp.ui.map.MapScreen
 import com.example.bleapp.ui.room.RoomScreen
 import com.example.bleapp.ui.scan.ScanScreen
 import com.example.bleapp.ui.theme.BgTertiary
+import com.example.bleapp.ui.welcome.LoginScreen
+import com.example.bleapp.ui.welcome.PlansLoadingScreen
 import com.example.bleapp.ui.welcome.SplashScreen
 import com.example.bleapp.ui.welcome.WelcomeScreen
 import com.example.bleapp.update.AppUpdate
@@ -55,40 +63,73 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private enum class Stage { Splash, Welcome, Main }
+private enum class Stage { Splash, Login, Loading, Welcome, Main }
 
 @Composable
 fun App() {
     val vm: MainViewModel = viewModel()
+    val context = LocalContext.current
+    val tokenStore = remember(context) { TokenStore(context) }
     var stage by remember { mutableStateOf(Stage.Splash) }
 
+    val logout: () -> Unit = {
+        if (vm.isScanning.value) vm.toggleScanning()
+        tokenStore.clear()
+        PlansRepository.reset()
+        stage = Stage.Login
+    }
+
     when (stage) {
-        Stage.Splash -> SplashScreen(onFinished = { stage = Stage.Welcome })
+        Stage.Splash -> SplashScreen(onFinished = {
+            stage = if (tokenStore.isTokenAlive()) Stage.Loading else Stage.Login
+        })
+        Stage.Login -> LoginScreen(onLoggedIn = { stage = Stage.Loading })
+        Stage.Loading -> {
+            val token = tokenStore.token
+            if (token.isNullOrEmpty()) {
+                stage = Stage.Login
+            } else {
+                PlansLoadingScreen(
+                    token = token,
+                    onLoaded = { stage = Stage.Welcome },
+                    onCancel = logout
+                )
+            }
+        }
         Stage.Welcome -> WelcomeScreen(
             onStart = {
                 if (!vm.isScanning.value) vm.toggleScanning()
                 stage = Stage.Main
             }
         )
-        Stage.Main -> MainContent(vm)
+        Stage.Main -> MainContent(vm, tokenStore, onLogout = logout)
     }
 }
 
 @Composable
-private fun MainContent(vm: MainViewModel) {
+private fun MainContent(vm: MainViewModel, tokenStore: TokenStore, onLogout: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val updateManager = remember(context) { UpdateManager(context.applicationContext) }
     var availableUpdate by remember { mutableStateOf<AppUpdate?>(null) }
     var updateBusy by remember { mutableStateOf(false) }
     var updateStatus by remember { mutableStateOf<String?>(null) }
+    var showChangePassword by remember { mutableStateOf(false) }
+    var showAdmin by remember { mutableStateOf(false) }
+    val currentLogin = tokenStore.login
+    val currentToken = tokenStore.token
+    val isAdmin = Jwt.isAdmin(currentToken)
     val allBeacons by vm.allBeacons.collectAsState()
     val currentBeacons by vm.currentBeacons.collectAsState()
+    val scanList by vm.scanList.collectAsState()
+    val scannerFilter by vm.scannerFilter.collectAsState()
+    val geoBeacons by vm.geoBeacons.collectAsState()
     val isScanning by vm.isScanning.collectAsState()
     val showSavedBeacons by vm.showSavedBeacons.collectAsState()
     val userPos by vm.userPos.collectAsState()
     val seeds by vm.currentSeeds.collectAsState()
     val selectedFloor by vm.selectedFloor.collectAsState()
+    val locations by PlansRepository.locations.collectAsState()
     val roomSize = remember(selectedFloor.id) { vm.currentFloorMaxMeters() }
 
     var selectedTab by remember { mutableStateOf(0) }
@@ -125,20 +166,67 @@ private fun MainContent(vm: MainViewModel) {
             )
 
             LegendMenuButton(allBeacons, vm.allSeeds)
+
+            ProfileMenuButton(
+                login = currentLogin,
+                isAdmin = isAdmin,
+                onAdmin = { showAdmin = true },
+                onChangePassword = { showChangePassword = true },
+                onLogout = onLogout
+            )
         }
 
         Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
             when (selectedTab) {
                 0 -> ScanScreen(
-                    beacons = allBeacons,
+                    beacons = scanList,
                     isScanning = isScanning,
                     showSavedBeacons = showSavedBeacons,
+                    scannerFilter = scannerFilter,
                     onToggleScanning = { vm.toggleScanning() },
-                    onToggleSavedBeacons = { vm.toggleSavedBeacons() }
+                    onToggleSavedBeacons = { vm.toggleSavedBeacons() },
+                    onFilterSelected = { vm.setScannerFilter(it) }
                 )
                 1 -> RoomScreen(currentBeacons, userPos, seeds, roomSize)
-                2 -> MapScreen(currentBeacons, userPos, seeds, selectedFloor) { vm.selectFloor(it) }
+                2 -> MapScreen(
+                    beacons = currentBeacons,
+                    userPos = userPos,
+                    seeds = seeds,
+                    selectedFloor = selectedFloor,
+                    geoBeacons = geoBeacons,
+                    locations = locations,
+                    onFloorSelected = { vm.selectFloor(it) }
+                )
             }
+        }
+    }
+
+    if (showChangePassword) {
+        val token = tokenStore.token
+        if (token == null) {
+            showChangePassword = false
+            onLogout()
+        } else {
+            ChangePasswordDialog(
+                token = token,
+                onDismiss = { showChangePassword = false },
+                onChanged = { newToken ->
+                    tokenStore.token = newToken
+                    showChangePassword = false
+                }
+            )
+        }
+    }
+
+    if (showAdmin) {
+        val token = tokenStore.token
+        if (token == null || !isAdmin) {
+            showAdmin = false
+        } else {
+            AdminScreen(
+                token = token,
+                onClose = { showAdmin = false }
+            )
         }
     }
 

@@ -8,7 +8,11 @@
       "Bash(C:\\\\Users\\\\Sasha\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe devices *)",
       "Bash(./gradlew :app:installDebug)",
       "Bash(python -c ' *)",
-      "Bash(\"C:\\\\Users\\\\Sasha\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" shell *)"
+      "Bash(\"C:\\\\Users\\\\Sasha\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" shell *)",
+      "Bash(./gradlew clean *)",
+      "Bash(./gradlew assembleRelease)",
+      "Bash(\"/c/Users/Sasha/AppData/Local/Android/Sdk/build-tools/36.0.0/aapt.exe\" dump *)",
+      "Bash(git add *)"
     ]
   }
 }

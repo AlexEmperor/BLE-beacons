@@ -3,24 +3,42 @@ package com.example.bleapp.viewmodel
 import android.app.Application
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.bleapp.ble.BleBeaconScanner
 import com.example.bleapp.data.Beacon
+import com.example.bleapp.data.BeaconKind
 import com.example.bleapp.data.BeaconSeed
 import com.example.bleapp.data.PlanFloor
-import com.example.bleapp.data.planLocations
-import com.example.bleapp.data.seedsForFloor
+import com.example.bleapp.data.PlansRepository
 import com.example.bleapp.util.calculateDistance
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import kotlin.math.cos
+
+enum class ScannerFilter { OurFormat, Others }
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val defaultFloor: PlanFloor = planLocations.first().floors.first()
-    private val allSavedSeeds: List<BeaconSeed> =
-        planLocations.flatMap { location -> location.floors.flatMap { floor -> seedsForFloor(floor.id) } }
+    /**
+     * Sentinel-этаж до первого успешного refresh PlansRepository.
+     * Пользователь его никогда не видит: переход на Main блокируется
+     * экраном PlansLoadingScreen, который ждёт непустого репо.
+     */
+    private val pendingFloor: PlanFloor = PlanFloor(
+        id = "__pending__",
+        name = "",
+        assetPath = "",
+        isSvg = false,
+        widthMeters = 1f,
+        heightMeters = 1f
+    )
+    private val allSavedSeeds: List<BeaconSeed>
+        get() = PlansRepository.allSeeds()
 
-    private val _selectedFloor = MutableStateFlow(defaultFloor)
+    private val _selectedFloor = MutableStateFlow(
+        PlansRepository.locations.value.firstOrNull()?.floors?.firstOrNull() ?: pendingFloor
+    )
     val selectedFloor: StateFlow<PlanFloor> = _selectedFloor
 
     private val _userPos = MutableStateFlow(Offset(0.5f, 0.5f))
@@ -43,6 +61,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _showSavedBeacons = MutableStateFlow(false)
     val showSavedBeacons: StateFlow<Boolean> = _showSavedBeacons
 
+    private val _scannerFilter = MutableStateFlow(ScannerFilter.OurFormat)
+    val scannerFilter: StateFlow<ScannerFilter> = _scannerFilter
+
+    private val _scanList = MutableStateFlow<List<Beacon>>(emptyList())
+    /** Маяки для вкладки «Сканер» с применённым фильтром. */
+    val scanList: StateFlow<List<Beacon>> = _scanList
+
+    private val _geoBeacons = MutableStateFlow<List<Beacon>>(emptyList())
+    /** Все маяки (live + saved when toggle on) с осмысленными GPS-координатами. */
+    val geoBeacons: StateFlow<List<Beacon>> = _geoBeacons
+
     val allSeeds: List<BeaconSeed>
         get() = if (_showSavedBeacons.value) {
             mergeSeeds(allSavedSeeds, liveSeedsForAllFloors(_liveBeacons.value))
@@ -57,6 +86,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         scanner.start()
+        // Когда набор локаций меняется (логин/смена юзера/logout), убеждаемся
+        // что выбранный этаж всё ещё существует. Иначе берём первый доступный.
+        viewModelScope.launch {
+            PlansRepository.locations.collect { locations ->
+                val current = _selectedFloor.value
+                val stillVisible = locations.any { loc -> loc.floors.any { it.id == current.id } }
+                if (!stillVisible) {
+                    locations.firstOrNull()?.floors?.firstOrNull()?.let { fallback ->
+                        _selectedFloor.value = fallback
+                    }
+                }
+                updateCurrentFloorData()
+            }
+        }
     }
 
     fun toggleScanning() {
@@ -76,6 +119,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         updateCurrentFloorData()
     }
 
+    fun setScannerFilter(filter: ScannerFilter) {
+        if (filter == _scannerFilter.value) return
+        _scannerFilter.value = filter
+        updateCurrentFloorData()
+    }
+
     fun selectFloor(floor: PlanFloor) {
         if (floor.id == _selectedFloor.value.id) return
         _selectedFloor.value = floor
@@ -84,21 +133,57 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun updateCurrentFloorData() {
         val floor = _selectedFloor.value
-        val liveWithPositions = _liveBeacons.value.filter { it.hasCoordinates() }
-        val liveSeeds = liveSeedsForFloor(floor, liveWithPositions)
-        val savedSeeds = if (_showSavedBeacons.value) seedsForFloor(floor.id) else emptyList()
-        val seeds = mergeSeeds(savedSeeds, liveSeeds)
-        val seedMacs = seeds.map { it.mac }.toHashSet()
-        val currentBeacons = mergeBeacons(
-            saved = savedSeeds.map(::savedBeaconFromSeed),
-            live = liveWithPositions.filter { it.mac in seedMacs }
-        )
+
+        val seeds: List<BeaconSeed>
+        val currentBeacons: List<Beacon>
+        if (floor.isWorldMap) {
+            // Город-режим: сохранённые маяки показываем только если включён тоггл
+            // «Отобразить существующие» в Сканере.
+            if (!_showSavedBeacons.value) {
+                seeds = emptyList()
+                currentBeacons = emptyList()
+            } else {
+                val saved = allSavedSeeds
+                val liveByMac = _liveBeacons.value.associateBy { it.mac }
+                seeds = saved.mapNotNull { s ->
+                    val pos = latLonToFloorOffset(floor, s.lat, s.lon) ?: return@mapNotNull null
+                    s.copy(x = pos.x, y = pos.y)
+                }
+                val seedMacs = seeds.map { it.mac }.toHashSet()
+                currentBeacons = saved
+                    .filter { it.mac in seedMacs }
+                    .map { s ->
+                        val base = savedBeaconFromSeed(s)
+                        liveByMac[s.mac]?.let { base.copy(rssi = it.rssi) } ?: base
+                    }
+                    .sortedByDescending { it.rssi }
+            }
+        } else {
+            val liveWithPositions = _liveBeacons.value.filter { it.hasCoordinates() }
+            val liveSeeds = liveSeedsForFloor(floor, liveWithPositions)
+            val savedSeeds = if (_showSavedBeacons.value) PlansRepository.seedsFor(floor.id) else emptyList()
+            seeds = mergeSeeds(savedSeeds, liveSeeds)
+            val seedMacs = seeds.map { it.mac }.toHashSet()
+            currentBeacons = mergeBeacons(
+                saved = savedSeeds.map(::savedBeaconFromSeed),
+                live = liveWithPositions.filter { it.mac in seedMacs }
+            )
+        }
 
         _currentSeeds.value = seeds
         _currentBeacons.value = currentBeacons
-        _allBeacons.value = allDisplayBeacons()
+        val display = allDisplayBeacons()
+        _allBeacons.value = display
+        _scanList.value = applyScannerFilter(display)
+        _geoBeacons.value = currentBeacons
         estimateUserPosition(currentBeacons, seeds)?.let { _userPos.value = it }
     }
+
+    private fun applyScannerFilter(beacons: List<Beacon>): List<Beacon> =
+        when (_scannerFilter.value) {
+            ScannerFilter.OurFormat -> beacons.filter { it.kind == BeaconKind.OurCustom }
+            ScannerFilter.Others -> beacons.filter { it.kind != BeaconKind.OurCustom }
+        }
 
     private fun allDisplayBeacons(): List<Beacon> {
         val saved = if (_showSavedBeacons.value) {
@@ -110,7 +195,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun liveSeedsForAllFloors(beacons: List<Beacon>): List<BeaconSeed> {
-        return planLocations
+        return PlansRepository.locations.value
             .asSequence()
             .flatMap { it.floors.asSequence() }
             .flatMap { floor -> liveSeedsForFloor(floor, beacons).asSequence() }
