@@ -15,8 +15,8 @@ android {
         applicationId = "com.example.bleapp"
         minSdk = 31
         targetSdk = 36
-        versionCode = 13
-        versionName = "1.0.7.5"
+        versionCode = 14
+        versionName = "1.0.7.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
