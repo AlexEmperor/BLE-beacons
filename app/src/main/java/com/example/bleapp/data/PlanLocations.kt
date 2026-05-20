@@ -15,7 +15,20 @@ data class PlanFloor(
     /** Угол поворота плана относительно севера, по часовой стрелке (градусы). */
     val bearingDeg: Float = 0f,
     /** Если true — вместо растрового/SVG-плана отрисовываем настоящую карту (osmdroid). */
-    val isWorldMap: Boolean = false
+    val isWorldMap: Boolean = false,
+    /** Если true — этаж отрисовывается как HTML/SVG в WebView (3D-просмотр). */
+    val isHtml3d: Boolean = false
+)
+
+/** Локальная встроенная локация с 3D-просмотром из ассетов (HTML+SVG в WebView). */
+val intellect3dLocation: PlanLocation = PlanLocation(
+    id = "intellect_3d",
+    name = "Интеллект-3D",
+    floors = listOf(
+        PlanFloor("intellect_3d_f1", "1 этаж", "intellect_3d/index.html", false, 83.33f, 59f, 1, 55.84341, 37.53777, isHtml3d = true),
+        PlanFloor("intellect_3d_f2", "2 этаж", "intellect_3d/index.html", false, 83.04f, 59f, 2, 55.84340, 37.53777, isHtml3d = true),
+        PlanFloor("intellect_3d_f3", "3 этаж", "intellect_3d/index.html", false, 83.20f, 59f, 3, 55.84341, 37.53778, isHtml3d = true)
+    )
 )
 
 data class PlanLocation(

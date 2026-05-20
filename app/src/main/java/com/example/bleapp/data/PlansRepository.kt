@@ -21,7 +21,7 @@ object PlansRepository {
 
     suspend fun refresh(token: String) {
         val data = PlansApi.fetch(token)
-        _locations.value = data.locations
+        _locations.value = data.locations + intellect3dLocation
         _seedsByFloor.value = data.seedsByFloor
     }
 

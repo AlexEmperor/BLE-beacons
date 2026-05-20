@@ -100,14 +100,17 @@ fun MapScreen(
                 .background(BgSecondary)
                 .weight(1f)
         ) {
-            if (selectedFloor.isWorldMap) {
-                MoscowMapScreen(
+            when {
+                selectedFloor.isWorldMap -> MoscowMapScreen(
                     beacons = geoBeacons,
                     centerLat = selectedFloor.refLat,
                     centerLon = selectedFloor.refLon
                 )
-            } else {
-                PlanView(selectedFloor, beacons, userPos, seeds)
+                selectedFloor.isHtml3d -> Intellect3DView(
+                    assetPath = selectedFloor.assetPath,
+                    floorIndex = (selectedFloor.level - 1).coerceIn(0, 2)
+                )
+                else -> PlanView(selectedFloor, beacons, userPos, seeds)
             }
         }
     }
