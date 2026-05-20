@@ -18,15 +18,13 @@
   .floor-button { background:#1c2a40; color:#cfe6ff; border:1px solid rgba(255,255,255,.12); }
   .floor-button.active { background:#75d7ff; color:#08111f; }
   .stage { position:fixed; inset:0; perspective:1400px; display:flex; align-items:center; justify-content:center; }
-  .scene { position:relative; width:90%; max-width:1500px; height:0; padding-bottom:63.7%; transform-style:preserve-3d; transition:filter .2s; }
+  .scene { position:relative; width:90%; max-width:1500px; height:0; padding-bottom:63.7%; transform-style:preserve-3d; will-change:transform; transform:translateZ(0); }
   .scene:active { cursor:grabbing; }
-  svg.floor-model { position:absolute; inset:0; width:100%; height:100%; overflow:visible; filter:drop-shadow(0 80px 70px rgba(0,0,0,.55)); opacity:0; pointer-events:none; transform:translate3d(340px,-220px,-180px) scale(.88); transition:opacity .48s ease, transform .68s cubic-bezier(.2,.9,.2,1), filter .48s ease; }
-  svg.floor-model.active { opacity:1; pointer-events:auto; transform:translate3d(0,0,0) scale(1); }
-  svg.floor-model.leaving { opacity:0; transform:translate3d(-340px,220px,-180px) scale(.88); filter:drop-shadow(0 35px 35px rgba(0,0,0,.28)); }
+  svg.floor-model { position:absolute; inset:0; width:100%; height:100%; overflow:visible; display:none; }
+  svg.floor-model.active { display:block; }
   .ground { opacity:.78; }
   .side { fill:#223048 !important; stroke:#111827 !important; stroke-width:3 !important; }
   .top * { vector-effect:non-scaling-stroke; }
-  .top path { filter:drop-shadow(0 6px 4px rgba(0,0,0,.24)); }
   .top [fill="none"] { fill:none !important; }
   .glass { fill:rgba(120,210,255,.25); stroke:#89e3ff; stroke-width:4; }
   .label { font-size:95px; font-weight:800; fill:#f8fbff; paint-order:stroke; stroke:#101928; stroke-width:14; opacity:.88; }
@@ -312,7 +310,7 @@
 <div class="hint">Мышкой можно крутить модель. Колёсиком — масштаб. Этажи переключаются кнопками.</div>
 <script>
 const scene=document.getElementById('scene');
-let currentFloor=0, locked=false;
+let currentFloor=0;
 
 // Фиксированные наклон/поворот; масштаб даём менять только pinch-zoom'ом WebView.
 scene.style.transform = 'rotateX(35deg) rotateZ(0deg) scale(0.95)';
@@ -320,25 +318,13 @@ scene.style.transformOrigin = '50% 50%';
 
 function switchFloor(nextFloor) {
   nextFloor = Number(nextFloor);
-  if (locked || nextFloor === currentFloor) return;
+  if (nextFloor === currentFloor) return;
   const oldFloor = document.getElementById('floor' + currentFloor);
   const newFloor = document.getElementById('floor' + nextFloor);
   if (!newFloor) return;
-  locked = true;
-
-  oldFloor.classList.remove('active');
-  oldFloor.classList.add('leaving');
-
-  newFloor.classList.remove('leaving');
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => newFloor.classList.add('active'));
-  });
-
-  setTimeout(() => {
-    oldFloor.classList.remove('leaving');
-    currentFloor = nextFloor;
-    locked = false;
-  }, 720);
+  if (oldFloor) oldFloor.classList.remove('active');
+  newFloor.classList.add('active');
+  currentFloor = nextFloor;
 }
 
 // Вызывается из Android через evaluateJavascript.

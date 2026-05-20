@@ -22,7 +22,9 @@ fun Intellect3DView(assetPath: String, floorIndex: Int, modifier: Modifier = Mod
                 settings.useWideViewPort = true
                 settings.loadWithOverviewMode = true
                 settings.domStorageEnabled = true
+                settings.cacheMode = android.webkit.WebSettings.LOAD_DEFAULT
                 setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
                 tag = -1
                 webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView, url: String?) {
