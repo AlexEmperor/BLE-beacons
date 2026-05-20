@@ -50,8 +50,8 @@ import androidx.compose.ui.unit.sp
 import com.example.bleapp.data.Beacon
 import com.example.bleapp.data.BeaconSeed
 import com.example.bleapp.ui.scan.BeaconDetailsDialog
-import com.example.bleapp.util.beaconColor
 import com.example.bleapp.util.calculateDistance
+import com.example.bleapp.util.rssiColor
 import kotlinx.coroutines.launch
 
 private val rssiLegend = listOf(
@@ -114,16 +114,11 @@ private fun LegendSheetContent(beacons: List<Beacon>, seeds: List<BeaconSeed>, o
     var query by remember { mutableStateOf("") }
     var selectedBeacon by remember { mutableStateOf<Beacon?>(null) }
 
-    // стабильный индекс маяка в общем перечне (для цвета, независимо от наличия в эфире)
-    val filtered = remember(beacons, seeds, query) {
-        val withStableIndex = beacons.map { b ->
-            val stable = seeds.indexOfFirst { it.mac == b.mac }.coerceAtLeast(0)
-            stable to b
-        }
-        if (query.isBlank()) withStableIndex
+    val filtered = remember(beacons, query) {
+        if (query.isBlank()) beacons
         else {
             val q = query.trim().lowercase()
-            withStableIndex.filter { (_, b) ->
+            beacons.filter { b ->
                 b.mac.lowercase().contains(q) || b.id.lowercase().contains(q)
             }
         }
@@ -186,9 +181,9 @@ private fun LegendSheetContent(beacons: List<Beacon>, seeds: List<BeaconSeed>, o
             LazyColumn(
                 modifier = Modifier.fillMaxWidth().heightIn(max = 380.dp)
             ) {
-                itemsIndexed(filtered, key = { _, item -> item.second.mac }) { _, (stableIndex, beacon) ->
+                itemsIndexed(filtered, key = { _, b -> b.mac }) { _, beacon ->
                     BeaconLegendRow(
-                        color = beaconColor(stableIndex, seeds.size.coerceAtLeast(1)),
+                        color = rssiColor(beacon.rssi),
                         beacon = beacon,
                         onClick = { selectedBeacon = beacon }
                     )
