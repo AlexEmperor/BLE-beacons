@@ -123,7 +123,9 @@ private fun LegendSheetContent(beacons: List<Beacon>, seeds: List<BeaconSeed>, o
         if (query.isBlank()) withStableIndex
         else {
             val q = query.trim().lowercase()
-            withStableIndex.filter { (_, b) -> b.mac.lowercase().contains(q) }
+            withStableIndex.filter { (_, b) ->
+                b.mac.lowercase().contains(q) || b.id.lowercase().contains(q)
+            }
         }
     }
 
@@ -152,7 +154,7 @@ private fun LegendSheetContent(beacons: List<Beacon>, seeds: List<BeaconSeed>, o
         OutlinedTextField(
             value = query,
             onValueChange = { query = it },
-            placeholder = { Text("Поиск по MAC", color = Color(0xFF6A6D78), fontSize = 13.sp) },
+            placeholder = { Text("Поиск по MAC или имени", color = Color(0xFF6A6D78), fontSize = 13.sp) },
             leadingIcon = { Icon(Icons.Default.Search, null, tint = Color(0xFF8A8A95)) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None),
